@@ -117,6 +117,19 @@ def recall(confusion_matrix: np.ndarray):
     return np.diag(confusion_matrix) / np.sum(confusion_matrix, axis=1)
 
 
+def accuracy(confusion_matrix: np.ndarray):
+    """
+    Calculate the accuracy from a confusion matrix
+
+    Args:
+        confusion_matrix (np.ndarray): Confusion matrix
+
+    Returns:
+        np.ndarray: Accuracy
+    """
+    return np.sum(np.diag(confusion_matrix)) / np.sum(confusion_matrix)
+
+
 def main(args):
     """
     Run the full count over all pageXMLs found in the input dir
@@ -125,7 +138,16 @@ def main(args):
         args (argparse.Namespace): command line arguments
     """
     image_paths = get_file_paths(args.input, supported_image_formats)
-    xml_paths = [image_path_to_xml_path(image_path) for image_path in image_paths]
+    xml_paths = [image_path_to_xml_path(image_path, check=False) for image_path in image_paths]
+
+    existing_xml_paths = []
+    for xml_path in xml_paths:
+        if xml_path.exists():
+            existing_xml_paths.append(xml_path)
+        else:
+            print(f"PageXML not found for {xml_path}")
+
+    xml_paths = existing_xml_paths
 
     # Single thread
     # regions_per_page = []
@@ -165,6 +187,7 @@ def main(args):
     cm = confusion_matrix(gt, pred)
     prec = precision(cm)
     rec = recall(cm)
+    acc = accuracy(cm)
 
     print("Confusion matrix")
     print(cm)
@@ -172,6 +195,8 @@ def main(args):
     print(prec)
     print("Recall")
     print(rec)
+    print("Accuracy")
+    print(acc)
 
 
 if __name__ == "__main__":
