@@ -1,0 +1,11 @@
+name: classification-gt
+channels:
+  - conda-forge
+dependencies:
+  - python=3
+  - numpy
+  - pandas
+  - openpyxl
+  - pyarrow
+  - tqdm
+  - pillow
