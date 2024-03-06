@@ -64,6 +64,7 @@ class PageData:
                     "coords": self.get_coords(node),
                     "type": self.get_region_type(node),
                     "id": self.get_id(node),
+                    "node": node,
                 }
                 idx += 1
         if to_return:
@@ -84,10 +85,10 @@ class PageData:
         try:
             re_match = re.match(r".*structure {.*type:(.*);.*}", element.attrib["custom"])
         except KeyError:
-            self.logger.warning(f"No region type defined for {self.get_id(element)} at {self.filepath}")
+            # self.logger.warning(f"No region type defined for {self.get_id(element)} at {self.filepath}")
             return None
         if re_match is None:
-            self.logger.warning(f"No region type defined for {self.get_id(element)} at {self.filepath}")
+            # self.logger.warning(f"No region type defined for {self.get_id(element)} at {self.filepath}")
             return None
         e_type = re_match.group(1)
 
@@ -177,7 +178,7 @@ class PageData:
                 self.logger.warning(f"No text found in line {self.get_id(element)} at {self.filepath}")
                 return ""
             else:
-                return text_data.encode("utf-8").strip()
+                return text_data.strip()
 
     def get_transcription(self):
         """Extracts text from each line on the XML file"""

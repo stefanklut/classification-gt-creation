@@ -1,4 +1,5 @@
 import argparse
+import json
 import sys
 from collections import Counter
 from pathlib import Path
@@ -23,7 +24,7 @@ def get_arguments() -> argparse.Namespace:
     return args
 
 
-def predict_class(xml_path: Path) -> int:
+def predict_class(xml_path: Path) -> tuple[int, dict]:
     """
     Count the unique regions in a pageXML
 
@@ -40,16 +41,24 @@ def predict_class(xml_path: Path) -> int:
     zones = page_data.get_zones(region_names)
 
     if zones is None:
-        return 0
+        return 0, {}
     found_metadata_cover = False
     found_date = False
     found_petitioner = False
     found_signature_mark = False
 
+    date_text = {}
+
     for item in zones.values():
         if item["type"] == "metadata\\u0020cover":
             found_metadata_cover = True
         elif item["type"] == "date":
+            for textline in item["node"].findall("".join(["./", page_data.base, "TextLine"])):
+                if not textline:
+                    continue
+                text = str(page_data.get_text(textline))
+                date_text[item["id"]] = text
+
             found_date = True
         elif item["type"] == "petitioner":
             found_petitioner = True
@@ -59,10 +68,14 @@ def predict_class(xml_path: Path) -> int:
     # if found_metadata_cover:
     #     return 1
 
-    if found_metadata_cover and found_date and found_petitioner and found_signature_mark:
-        return 1
+    # if found_metadata_cover and found_date and found_petitioner:
+    #     return 1
 
-    return 0
+    if found_metadata_cover and found_date and found_petitioner and found_signature_mark:
+
+        return 1, date_text
+
+    return 0, date_text
     # counter = Counter(item["type"] for item in zones.values())
 
     # return counter
@@ -145,7 +158,8 @@ def main(args):
         if xml_path.exists():
             existing_xml_paths.append(xml_path)
         else:
-            print(f"PageXML not found for {xml_path}")
+            # print(f"PageXML not found for {xml_path}")
+            pass
 
     xml_paths = existing_xml_paths
 
@@ -181,7 +195,19 @@ def main(args):
         classes[name] = 1
 
     gt = np.array([classes.get(xml_path.stem, 0) for xml_path in xml_paths])
-    pred = np.array([predict_class(path) for path in xml_paths])
+    total_date_dict = {}
+    pred = []
+    for xml_path in xml_paths:
+        pred_i, date_dict = predict_class(xml_path)
+        pred.append(pred_i)
+
+        if date_dict:
+            path_key = str(xml_path)
+            if path_key in total_date_dict:
+                total_date_dict[path_key].update(date_dict)
+            else:
+                total_date_dict[path_key] = date_dict
+    pred = np.array(pred)
     print(pred.shape, gt.shape)
 
     cm = confusion_matrix(gt, pred)
@@ -197,6 +223,10 @@ def main(args):
     print(rec)
     print("Accuracy")
     print(acc)
+
+    json_path = Path("../date_dict.json")
+    with json_path.open("w") as f:
+        json.dump(total_date_dict, f)
 
 
 if __name__ == "__main__":
