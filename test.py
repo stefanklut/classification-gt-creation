@@ -7,6 +7,7 @@ from collections import Counter
 from multiprocessing.pool import Pool
 from pathlib import Path
 
+import numpy as np
 import pandas as pd
 from tqdm import tqdm
 
@@ -39,6 +40,7 @@ def get_arguments() -> argparse.Namespace:
 
     io_args = parser.add_argument_group("IO")
     io_args.add_argument("-i", "--input", help="Input folder/file", nargs="+", action="extend", type=str)
+    io_args.add_argument("-c", "--classes", help="Path to the classes file", type=str, required=True)
     args = parser.parse_args()
     return args
 
@@ -76,8 +78,19 @@ def main(args):
 
     image_paths = get_file_paths(args.input, supported_image_formats)
     xml_paths = [image_path_to_xml_path(image_path) for image_path in image_paths]
-    classification = pd.read_csv("rekesten.csv")
-    classes = {Path(name).stem: value for name, value in zip(classification["name"].values, classification["start"].values)}
+    data = pd.read_excel(args.classes)
+
+    classes = {}
+    for index, row in data.iterrows():
+        filename = row["Bestandsnamen"]
+        if isinstance(filename, float) and np.isnan(filename):
+            print(f"NaN found at index {index}")
+            continue
+        elif not isinstance(filename, str):
+            print(f"Unknown type found at index {index}")
+            continue
+        name = Path(filename).stem
+        classes[name] = 1
 
     # xml_paths = get_file_paths(args.input, [".xml"])
 
@@ -97,8 +110,8 @@ def main(args):
         )
 
     # Combine the counters of multiple regions
-    start_counters = [counter for counter, xml_path in regions_per_page if classes[xml_path.stem] == 1]
-    not_start_counters = [counter for counter, xml_path in regions_per_page if classes[xml_path.stem] == 0]
+    start_counters = [counter for counter, xml_path in regions_per_page if classes.get(xml_path.stem, 0) == 1]
+    not_start_counters = [counter for counter, xml_path in regions_per_page if classes.get(xml_path.stem, 0) == 0]
 
     print("Start")
     total_start_regions = sum(start_counters, Counter())
