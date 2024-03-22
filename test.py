@@ -115,7 +115,7 @@ def main(args):
 
     print("Start")
     total_start_regions = sum(start_counters, Counter())
-    print(len(start_counters))
+    print(f"Total: {len(start_counters)}"
     pretty_print(dict(total_start_regions), n_decimals=0)
 
     keys = list(total_start_regions.keys())
@@ -134,7 +134,7 @@ def main(args):
 
     print("Not start")
     total_not_start_regions = sum(not_start_counters, Counter())
-    print(len(not_start_counters))
+    print(f"Total: {len(not_start_counters)}"
     pretty_print(dict(total_not_start_regions), n_decimals=0)
 
     keys = list(total_not_start_regions.keys())
