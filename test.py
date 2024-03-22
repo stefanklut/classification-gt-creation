@@ -116,6 +116,7 @@ def main(args):
     print("Start")
     total_start_regions = sum(start_counters, Counter())
     print(f"Total: {len(start_counters)}")
+    print("Number of occurrences:")
     pretty_print(dict(total_start_regions), n_decimals=0)
 
     keys = list(total_start_regions.keys())
@@ -125,16 +126,17 @@ def main(args):
             if key in region:
                 contains_region[key] += 1
     percentage = {key: value / len(start_counters) for key, value in contains_region.items()}
-    print("Percentage")
+    print("Percentage containing:")
     pretty_print(percentage)
 
-    print("Average")
+    print("Average occurrences per page:")
     average = {key: value / len(start_counters) for key, value in total_start_regions.items()}
     pretty_print(average)
 
     print("Not start")
     total_not_start_regions = sum(not_start_counters, Counter())
     print(f"Total: {len(not_start_counters)}")
+    print("Number of occurrences:")
     pretty_print(dict(total_not_start_regions), n_decimals=0)
 
     keys = list(total_not_start_regions.keys())
@@ -144,10 +146,10 @@ def main(args):
             if key in region:
                 contains_region[key] += 1
     percentage = {key: value / len(not_start_counters) for key, value in contains_region.items()}
-    print("Percentage")
+    print("Percentage containing:")
     pretty_print(percentage)
 
-    print("Average")
+    print("Average occurrences per page:")
     average = {key: value / len(not_start_counters) for key, value in total_not_start_regions.items()}
     pretty_print(average)
 
